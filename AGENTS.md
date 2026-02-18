@@ -141,4 +141,6 @@ The model describes **Finda** — a personal finance intelligence system — at 
    - Keep it under 72 characters.
    - Do not end with a period.
 
-5. **No generated or build artefacts.** Do not commit the `dist/` directory or `node_modules/`. Both are covered by `.gitignore`.
+5. **Only commit on direct user request.** Do not create commits autonomously. Always wait for an explicit instruction from the user before running any `git commit` command.
+
+6. **No generated or build artefacts.** Do not commit the `dist/` directory or `node_modules/`. Both are covered by `.gitignore`.
