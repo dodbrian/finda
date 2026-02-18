@@ -1,0 +1,58 @@
+/**
+ * Finda - Element Specifications
+ *
+ * Defines the element kinds and their default visual styles
+ * used throughout the architecture model.
+ */
+
+specification {
+
+  element person {
+    notation "Person"
+    style {
+      shape person
+      color secondary
+    }
+  }
+
+  element system {
+    notation "System"
+    style {
+      shape rectangle
+      color primary
+    }
+  }
+
+  element service {
+    notation "Service"
+    style {
+      shape rectangle
+      color green
+    }
+  }
+
+  element store {
+    notation "Data Store"
+    style {
+      shape storage
+      color indigo
+    }
+  }
+
+  element queue {
+    notation "Message Queue"
+    style {
+      shape queue
+      color amber
+    }
+  }
+
+  element external {
+    notation "External System"
+    style {
+      shape browser
+      color muted
+    }
+  }
+
+}

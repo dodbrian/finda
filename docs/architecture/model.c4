@@ -1,0 +1,101 @@
+/**
+ * Finda - Architecture Model
+ *
+ * Defines all system elements and their relationships.
+ * Finda ingests bank statements (text or image), parses and classifies
+ * transactions, stores them in a unified database, and exposes them
+ * for reporting and analytics.
+ */
+
+model {
+
+  // ─── Actors ───────────────────────────────────────────────────────────────
+
+  user = person 'User' {
+    description 'Personal finance owner who uploads bank statements and reviews categorized transactions'
+  }
+
+  // ─── External Systems ─────────────────────────────────────────────────────
+
+  bankSource = external 'Bank Statement Source' {
+    description 'Upstream bank portals or local exports providing statements in PDF, CSV, plain text, or image formats'
+  }
+
+  // ─── Finda System ─────────────────────────────────────────────────────────
+
+  finda = system 'Finda' {
+    description 'Personal bank account data pipeline: ingest, parse, classify, store, and process bank statements'
+
+    // ── Web Application ──────────────────────────────────────────────────
+
+    webApp = service 'Web App' {
+      description 'Browser-based dashboard allowing the user to upload statements, browse transactions, review categories, and view analytics reports'
+    }
+
+    // ── Ingestion ────────────────────────────────────────────────────────
+
+    ingestionService = service 'Ingestion Service' {
+      description 'Entry point for uploaded statement files. Detects format (image vs. text/CSV/PDF), routes to the appropriate parser, and coordinates the processing pipeline'
+    }
+
+    ocrEngine = service 'OCR Engine' {
+      description 'Converts image-based bank statements (scanned pages, photos) into machine-readable text using optical character recognition'
+    }
+
+    parserService = service 'Parser Service' {
+      description 'Extracts structured transaction records (date, amount, description, currency, account) from raw text or CSV/PDF content'
+    }
+
+    // ── Classification ───────────────────────────────────────────────────
+
+    classificationEngine = service 'Classification Engine' {
+      description 'Assigns each transaction to an income or expense category (e.g. Groceries, Rent, Salary) using rules and/or ML-based classification'
+    }
+
+    // ── Storage ──────────────────────────────────────────────────────────
+
+    storageService = service 'Storage Service' {
+      description 'Persists classified transactions and manages the unified data schema. Provides a query API for other services'
+    }
+
+    transactionDb = store 'Transaction DB' {
+      description 'Unified relational store for all parsed and classified transaction records across all accounts and banks'
+    }
+
+    categoryDb = store 'Category DB' {
+      description 'Reference store for the expense/income taxonomy: category names, keywords, classification rules, and ML model metadata'
+    }
+
+    // ── Analytics ────────────────────────────────────────────────────────
+
+    analyticsService = service 'Analytics Service' {
+      description 'Aggregates stored transactions to produce spending summaries, income trends, budget comparisons, and exportable reports'
+    }
+
+  }
+
+  // ─── Relationships ────────────────────────────────────────────────────────
+
+  // User interactions
+  user -> finda.webApp 'uploads statements, reviews transactions and reports'
+  bankSource -> finda.ingestionService 'provides statement files (PDF, CSV, image, text)'
+
+  // Ingestion pipeline
+  finda.webApp -> finda.ingestionService 'submits uploaded statement file'
+  finda.ingestionService -> finda.ocrEngine 'sends image statement for text extraction'
+  finda.ingestionService -> finda.parserService 'sends text/CSV/PDF content for parsing'
+  finda.ocrEngine -> finda.parserService 'passes extracted raw text'
+
+  // Classification pipeline
+  finda.parserService -> finda.classificationEngine 'sends structured transaction records'
+  finda.classificationEngine -> finda.categoryDb 'reads category rules and taxonomy'
+  finda.classificationEngine -> finda.storageService 'sends classified transactions'
+
+  // Storage
+  finda.storageService -> finda.transactionDb 'reads and writes transaction records'
+
+  // Analytics
+  finda.analyticsService -> finda.storageService 'queries transaction data'
+  finda.webApp -> finda.analyticsService 'requests reports and summaries'
+
+}

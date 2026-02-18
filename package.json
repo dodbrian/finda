@@ -1,0 +1,15 @@
+{
+  "name": "finda",
+  "version": "0.1.0",
+  "description": "Architecture documentation for Finda using LikeC4",
+  "private": true,
+  "scripts": {
+    "dev": "likec4 start docs/architecture/",
+    "build": "likec4 build docs/architecture/ -o dist/",
+    "preview": "likec4 preview docs/architecture/",
+    "validate": "likec4 validate docs/architecture/"
+  },
+  "devDependencies": {
+    "likec4": "^1.49.0"
+  }
+}

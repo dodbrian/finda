@@ -1,0 +1,190 @@
+/**
+ * Finda - Architecture Views
+ *
+ * Defines all diagrams rendered from the model.
+ * Four views covering: system landscape, container breakdown,
+ * ingestion/parsing flow, and classification/storage flow.
+ */
+
+views {
+
+  // ─── 1. System Landscape ──────────────────────────────────────────────────
+  //
+  // Shows Finda in the context of its users and external data sources.
+  // Entry point for anyone unfamiliar with the system.
+
+  view index {
+    title 'Finda – System Landscape'
+    description 'High-level overview of Finda and its external actors'
+
+    include *
+
+    autoLayout TopBottom
+
+    style * {
+      color secondary
+    }
+
+    style user {
+      color muted
+    }
+
+    style bankSource {
+      color muted
+    }
+
+    style finda {
+      color primary
+    }
+  }
+
+  // ─── 2. Finda Containers ──────────────────────────────────────────────────
+  //
+  // Zooms into the Finda system boundary to show all internal services,
+  // data stores, and how data flows between them end-to-end.
+
+  view finda_containers of finda {
+    title 'Finda – Containers'
+    description 'Internal services and data stores within the Finda system boundary'
+
+    include *
+
+    autoLayout LeftRight
+
+    style * {
+      color secondary
+    }
+
+    style finda.webApp {
+      color green
+    }
+
+    style finda.ingestionService {
+      color blue
+    }
+
+    style finda.ocrEngine, finda.parserService {
+      color amber
+    }
+
+    style finda.classificationEngine {
+      color red
+    }
+
+    style finda.storageService {
+      color indigo
+    }
+
+    style finda.transactionDb, finda.categoryDb {
+      color indigo
+    }
+
+    style finda.analyticsService {
+      color slate
+    }
+  }
+
+  // ─── 3. Ingestion & Parsing Flow ──────────────────────────────────────────
+  //
+  // Focuses on how a raw bank statement (text or image) is received,
+  // converted to text if necessary, and parsed into structured records.
+
+  view ingestion_flow {
+    title 'Finda – Ingestion & Parsing Flow'
+    description 'How bank statement files are received, OCR-processed (if image), and parsed into structured transaction records'
+
+    include
+      user,
+      bankSource,
+      finda.webApp,
+      finda.ingestionService,
+      finda.ocrEngine,
+      finda.parserService
+
+    include
+      user -> finda.webApp,
+      bankSource -> finda.ingestionService,
+      finda.webApp -> finda.ingestionService,
+      finda.ingestionService -> finda.ocrEngine,
+      finda.ingestionService -> finda.parserService,
+      finda.ocrEngine -> finda.parserService
+
+    autoLayout LeftRight
+
+    style * {
+      color secondary
+    }
+
+    style user, bankSource {
+      color muted
+    }
+
+    style finda.ingestionService {
+      color blue
+    }
+
+    style finda.ocrEngine, finda.parserService {
+      color amber
+    }
+  }
+
+  // ─── 4. Classification & Storage Flow ─────────────────────────────────────
+  //
+  // Focuses on how parsed transaction records are classified into
+  // income/expense categories and persisted to the unified database.
+
+  view classification_flow {
+    title 'Finda – Classification & Storage Flow'
+    description 'How parsed transactions are categorized and stored; how analytics are derived'
+
+    include
+      finda.parserService,
+      finda.classificationEngine,
+      finda.categoryDb,
+      finda.storageService,
+      finda.transactionDb,
+      finda.analyticsService,
+      finda.webApp,
+      user
+
+    include
+      finda.parserService -> finda.classificationEngine,
+      finda.classificationEngine -> finda.categoryDb,
+      finda.classificationEngine -> finda.storageService,
+      finda.storageService -> finda.transactionDb,
+      finda.analyticsService -> finda.storageService,
+      finda.webApp -> finda.analyticsService,
+      user -> finda.webApp
+
+    autoLayout LeftRight
+
+    style * {
+      color secondary
+    }
+
+    style user {
+      color muted
+    }
+
+    style finda.classificationEngine {
+      color red
+    }
+
+    style finda.categoryDb, finda.transactionDb {
+      color indigo
+    }
+
+    style finda.storageService {
+      color indigo
+    }
+
+    style finda.analyticsService {
+      color slate
+    }
+
+    style finda.webApp {
+      color green
+    }
+  }
+
+}
