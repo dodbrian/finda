@@ -2,8 +2,9 @@
  * Finda - Architecture Views
  *
  * Defines all diagrams rendered from the model.
- * Five views covering: system landscape, container breakdown,
- * ingestion/parsing flow, classification/storage flow, and CLI automation flow.
+ * Six views covering: system landscape, container breakdown,
+ * ingestion & parsing flow, ingestion service detail, CLI automation flow,
+ * and classification/storage flow.
  */
 
 views {
@@ -140,7 +141,75 @@ views {
     }
   }
 
-  // ─── 4. CLI Automation Flow ───────────────────────────────────────────────
+  // ─── 4. Ingestion Service Detail ─────────────────────────────────────────
+  //
+  // Zooms into the internal sub-components of the Ingestion Service:
+  //   1. File Receiver   — accepts the file from Web App, CLI, or bank source
+  //   2. Format Detector — classifies the file as image, PDF, CSV, or text
+  //   3. Routing Coordinator — dispatches image files to OCR Engine;
+  //                            text-based files go straight to Parser Service
+  // The OCR Engine hands its extracted text on to the Parser Service.
+
+  view ingestion_service of finda.ingestionService {
+    title 'Finda – Ingestion Service Internals'
+    description 'Internal workings of the Ingestion Service: how a file is received, its format detected, and routed to the OCR Engine (images) or directly to the Parser Service (text/CSV/PDF)'
+
+    include
+      bankSource,
+      finda.webApp,
+      finda.cliApp,
+      finda.ingestionService.fileReceiver,
+      finda.ingestionService.formatDetector,
+      finda.ingestionService.routingCoordinator,
+      finda.ocrEngine,
+      finda.parserService
+
+    include
+      bankSource -> finda.ingestionService.fileReceiver,
+      finda.webApp -> finda.ingestionService.fileReceiver,
+      finda.cliApp -> finda.ingestionService.fileReceiver,
+      finda.ingestionService.fileReceiver -> finda.ingestionService.formatDetector,
+      finda.ingestionService.formatDetector -> finda.ingestionService.routingCoordinator,
+      finda.ingestionService.routingCoordinator -> finda.ocrEngine,
+      finda.ingestionService.routingCoordinator -> finda.parserService,
+      finda.ocrEngine -> finda.parserService
+
+    autoLayout LeftRight
+
+    style * {
+      color secondary
+    }
+
+    style bankSource {
+      color muted
+    }
+
+    style finda.webApp, finda.cliApp {
+      color green
+    }
+
+    style finda.ingestionService.fileReceiver {
+      color blue
+    }
+
+    style finda.ingestionService.formatDetector {
+      color blue
+    }
+
+    style finda.ingestionService.routingCoordinator {
+      color blue
+    }
+
+    style finda.ocrEngine {
+      color amber
+    }
+
+    style finda.parserService {
+      color amber
+    }
+  }
+
+  // ─── 5. CLI Automation Flow ───────────────────────────────────────────────
   //
   // Shows how the CLI drives an end-to-end automated pipeline: it reads
   // configuration, pulls statements from a bank source, triggers ingestion,
@@ -194,7 +263,7 @@ views {
     }
   }
 
-  // ─── 5. Classification & Storage Flow ─────────────────────────────────────
+  // ─── 6. Classification & Storage Flow ─────────────────────────────────────
   //
   // Focuses on how parsed transaction records are classified into
   // income/expense categories and persisted to the unified database.
