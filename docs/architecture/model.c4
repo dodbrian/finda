@@ -36,6 +36,18 @@ model {
 
     ingestionService = service 'Ingestion Service' {
       description 'Entry point for uploaded statement files. Detects format (image vs. text/CSV/PDF), routes to the appropriate parser, and coordinates the processing pipeline'
+
+      fileReceiver = service 'File Receiver' {
+        description 'Accepts incoming statement files from the Web App, CLI, or a direct bank source feed. Validates that the file is readable and stores it temporarily for processing'
+      }
+
+      formatDetector = service 'Format Detector' {
+        description 'Inspects each file via MIME type, magic bytes, and extension to classify it as an image, PDF, CSV, or plain-text statement'
+      }
+
+      routingCoordinator = service 'Routing Coordinator' {
+        description 'Dispatches the classified file along the correct path: image files go to the OCR Engine; text-based files (PDF, CSV, plain text) go directly to the Parser Service'
+      }
     }
 
     ocrEngine = service 'OCR Engine' {
@@ -86,11 +98,20 @@ model {
   user -> finda.webApp 'uploads statements, reviews transactions and reports'
   bankSource -> finda.ingestionService 'provides statement files (PDF, CSV, image, text)'
 
-  // Ingestion pipeline
+  // Ingestion pipeline (high-level, used by container and flow views)
   finda.webApp -> finda.ingestionService 'submits uploaded statement file'
   finda.ingestionService -> finda.ocrEngine 'sends image statement for text extraction'
   finda.ingestionService -> finda.parserService 'sends text/CSV/PDF content for parsing'
   finda.ocrEngine -> finda.parserService 'passes extracted raw text'
+
+  // Ingestion Service internals (used by the ingestion_service detail view)
+  finda.webApp -> finda.ingestionService.fileReceiver 'submits uploaded file'
+  finda.cliApp -> finda.ingestionService.fileReceiver 'submits statement file from configured source'
+  bankSource -> finda.ingestionService.fileReceiver 'provides statement file directly'
+  finda.ingestionService.fileReceiver -> finda.ingestionService.formatDetector 'passes file for format inspection'
+  finda.ingestionService.formatDetector -> finda.ingestionService.routingCoordinator 'forwards classified file'
+  finda.ingestionService.routingCoordinator -> finda.ocrEngine 'routes image file for OCR'
+  finda.ingestionService.routingCoordinator -> finda.parserService 'routes text/CSV/PDF for parsing'
 
   // Classification pipeline
   finda.parserService -> finda.classificationEngine 'sends structured transaction records'
