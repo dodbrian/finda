@@ -72,6 +72,12 @@ model {
       description 'Aggregates stored transactions to produce spending summaries, income trends, budget comparisons, and exportable reports'
     }
 
+    // ── CLI ──────────────────────────────────────────────────────────────
+
+    cliApp = service 'CLI' {
+      description 'Command-line interface for running Finda in automated jobs and scheduled pipelines. Reads a configuration file to locate statement sources, trigger ingestion, and optionally export analytics reports without human interaction'
+    }
+
   }
 
   // ─── Relationships ────────────────────────────────────────────────────────
@@ -97,5 +103,11 @@ model {
   // Analytics
   finda.analyticsService -> finda.storageService 'queries transaction data'
   finda.webApp -> finda.analyticsService 'requests reports and summaries'
+
+  // CLI (automated jobs)
+  user -> finda.cliApp 'configures and invokes automated jobs'
+  bankSource -> finda.cliApp 'provides statement files for batch processing'
+  finda.cliApp -> finda.ingestionService 'submits statement files from configured sources'
+  finda.cliApp -> finda.analyticsService 'requests exported reports on completion'
 
 }

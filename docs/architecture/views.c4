@@ -2,8 +2,8 @@
  * Finda - Architecture Views
  *
  * Defines all diagrams rendered from the model.
- * Four views covering: system landscape, container breakdown,
- * ingestion/parsing flow, and classification/storage flow.
+ * Five views covering: system landscape, container breakdown,
+ * ingestion/parsing flow, classification/storage flow, and CLI automation flow.
  */
 
 views {
@@ -82,6 +82,10 @@ views {
     style finda.analyticsService {
       color slate
     }
+
+    style finda.cliApp {
+      color green
+    }
   }
 
   // ─── 3. Ingestion & Parsing Flow ──────────────────────────────────────────
@@ -91,20 +95,24 @@ views {
 
   view ingestion_flow {
     title 'Finda – Ingestion & Parsing Flow'
-    description 'How bank statement files are received, OCR-processed (if image), and parsed into structured transaction records'
+    description 'How bank statement files are received (via Web App or CLI), OCR-processed (if image), and parsed into structured transaction records'
 
     include
       user,
       bankSource,
       finda.webApp,
+      finda.cliApp,
       finda.ingestionService,
       finda.ocrEngine,
       finda.parserService
 
     include
       user -> finda.webApp,
+      user -> finda.cliApp,
       bankSource -> finda.ingestionService,
+      bankSource -> finda.cliApp,
       finda.webApp -> finda.ingestionService,
+      finda.cliApp -> finda.ingestionService,
       finda.ingestionService -> finda.ocrEngine,
       finda.ingestionService -> finda.parserService,
       finda.ocrEngine -> finda.parserService
@@ -119,6 +127,10 @@ views {
       color muted
     }
 
+    style finda.webApp, finda.cliApp {
+      color green
+    }
+
     style finda.ingestionService {
       color blue
     }
@@ -128,7 +140,61 @@ views {
     }
   }
 
-  // ─── 4. Classification & Storage Flow ─────────────────────────────────────
+  // ─── 4. CLI Automation Flow ───────────────────────────────────────────────
+  //
+  // Shows how the CLI drives an end-to-end automated pipeline: it reads
+  // configuration, pulls statements from a bank source, triggers ingestion,
+  // and exports an analytics report — all without human interaction.
+
+  view cli_flow {
+    title 'Finda – CLI Automation Flow'
+    description 'End-to-end automated job: CLI reads config, submits statements to ingestion, and exports analytics reports'
+
+    include
+      user,
+      bankSource,
+      finda.cliApp,
+      finda.ingestionService,
+      finda.analyticsService,
+      finda.storageService,
+      finda.transactionDb
+
+    include
+      user -> finda.cliApp,
+      bankSource -> finda.cliApp,
+      finda.cliApp -> finda.ingestionService,
+      finda.cliApp -> finda.analyticsService,
+      finda.analyticsService -> finda.storageService,
+      finda.storageService -> finda.transactionDb
+
+    autoLayout LeftRight
+
+    style * {
+      color secondary
+    }
+
+    style user, bankSource {
+      color muted
+    }
+
+    style finda.cliApp {
+      color green
+    }
+
+    style finda.ingestionService {
+      color blue
+    }
+
+    style finda.analyticsService {
+      color slate
+    }
+
+    style finda.storageService, finda.transactionDb {
+      color indigo
+    }
+  }
+
+  // ─── 5. Classification & Storage Flow ─────────────────────────────────────
   //
   // Focuses on how parsed transaction records are classified into
   // income/expense categories and persisted to the unified database.
