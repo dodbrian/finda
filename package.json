@@ -10,6 +10,6 @@
     "validate": "likec4 validate docs/architecture/"
   },
   "devDependencies": {
-    "likec4": "^1.49.0"
+    "likec4": "^1.51.0"
   }
 }
